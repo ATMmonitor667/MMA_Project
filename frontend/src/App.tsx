@@ -1,43 +1,36 @@
-import { useState, useEffect } from 'react';
 import './App.css';
-
-type Fighter = {
-  id: string;
+import FighterCard from './components/fighterCard';
+import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+type FighterStats = {
   first_name: string;
-  second_name: string;
+  last_name: string;
+  description: string;
   power: number;
   speed: number;
   durability: number;
-  intelligence: number;
-  rating: number;
+  iq: number;
+  image: string;
 };
 
 function App() {
-  const [fighters, setFighters] = useState<Fighter[]>([]);
-
-  useEffect(() => {
-    fetch('http://localhost:5000/')
-      .then(res => res.json())
-      .then(data => {
-        console.log("Fetched data:", data);
-        setFighters(data);
-      })
-      .catch(err => console.error(err));
-  }, []);
+  const testData: FighterStats = {
+    first_name: 'Illia',
+    last_name: 'Topuria',
+    description: 'Powerful striker with a strong wrestling background.',
+    power: 95,
+    speed: 90,
+    durability: 85,
+    iq: 88,
+    image: '/TOPURIA_ILIA_L_BELT_10-26.avif'
+  };
 
   return (
     <>
-      {fighters.map((f) => (
-        <div key={f.id}>
-          <h2>{f.first_name}</h2>
-          <h2>{f.second_name}</h2>
-          <h2>{f.power}</h2>
-          <h2>{f.speed}</h2>
-          <h2>{f.durability}</h2>
-          <h2>{f.intelligence}</h2>
-          <h2>{f.rating}</h2>
-        </div>
-      ))}
+      <Router>
+        <Routes>
+          <Route path="/" element={<FighterCard props={testData} />} />
+        </Routes>
+      </Router>
     </>
   );
 }

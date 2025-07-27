@@ -1,0 +1,3 @@
+SELECT u.first_name, u.last_name, a.power, a.speed, a.durability, a.iq FROM ufc_fighter AS u
+LEFT JOIN ufc_weight_fighter AS a ON
+a.fighter_id = u.fighter_id

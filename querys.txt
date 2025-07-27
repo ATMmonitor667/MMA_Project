@@ -1,3 +1,42 @@
 SELECT u.first_name, u.last_name, a.power, a.speed, a.durability, a.iq FROM ufc_fighter AS u
 LEFT JOIN ufc_weight_fighter AS a ON
 a.fighter_id = u.fighter_id
+
+``Great question! Since you have three separate tables that combine to make a Fighter, you'll need a different approach than the User model. Here's how I'd recommend structuring it:
+
+Database Schema Considerations
+First, you'll want to understand your table relationships:
+
+Primary Fighter Table: Basic fighter info (id, name, etc.)
+Fighter Stats Table: Performance metrics (power, speed, durability, etc.)
+Fighter Details Table: Additional info (description, weight class, etc.)
+Recommended Implementation Approach
+1. TypeScript Interfaces
+2. Core Functions to Implement
+Read Operations:
+
+findFighterById(id: number): Promise<Fighter | null>
+findFighterByName(firstName: string, lastName: string): Promise<Fighter | null>
+findAllFighters(): Promise<Fighter[]>
+searchFighters(criteria: SearchCriteria): Promise<Fighter[]>
+Write Operations:
+
+createFighter(fighterData: CreateFighterData): Promise<Fighter>
+updateFighter(id: number, updates: Partial<Fighter>): Promise<Fighter | null>
+deleteFighter(id: number): Promise<boolean>
+3. SQL Query Strategy
+Since you need to join three tables, your queries will use JOINs:
+
+4. Transaction Handling
+For create/update operations affecting multiple tables:
+
+Use database transactions to ensure data consistency
+Handle partial failures gracefully
+Consider creating helper functions for each table operation
+5. Key Differences from User Model
+Complexity: Multiple table operations vs single table
+Transactions: Need to coordinate writes across tables
+Joins: Read operations require JOINs instead of simple SELECT
+Validation: May need to validate relationships between tables
+Error Handling: More complex rollback scenarios
+Would you like me to help you implement any specific part of this Fighter model, or do you have questions about how to handle the multi-table relationships?```

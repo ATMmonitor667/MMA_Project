@@ -14,7 +14,7 @@ export interface JWTPayload {
 // Generate JWT token
 export const generateToken = (user: UserWithoutPassword): string => {
   const payload: JWTPayload = {
-    userId: user.id,
+    userId: user.user_id,
     username: user.username,
     email: user.email,
     role: user.role
@@ -40,6 +40,6 @@ export const extractTokenFromHeader = (authHeader: string | undefined): string |
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
-  
+
   return authHeader.substring(7); // Remove 'Bearer ' prefix
-}; 
+};

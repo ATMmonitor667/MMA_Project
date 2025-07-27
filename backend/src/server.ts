@@ -5,7 +5,7 @@ import pool from '../config/db'
 import cors from "cors";
 import fighterRoutes from './routes/fighterRoutes'
 import authRoutes from './routes/authRoutes'
-import { UserModel } from './models/User'
+import { createUserTable } from './models/User'
 //import championFighter from './routes/championRoute'
 
 const app = express();
@@ -21,7 +21,7 @@ app.use(express.json())
 // Initialize database tables
 const initializeDatabase = async () => {
   try {
-    await UserModel.createTable();
+    await createUserTable();
     console.log('Database tables initialized successfully');
   } catch (error) {
     console.error('Error initializing database tables:', error);

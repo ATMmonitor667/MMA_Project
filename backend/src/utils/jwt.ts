@@ -1,8 +1,8 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { UserWithoutPassword } from '../models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+const JWT_SECRET = (process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production') as string;
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '24h');
 
 export interface JWTPayload {
   userId: number;
@@ -20,9 +20,11 @@ export const generateToken = (user: UserWithoutPassword): string => {
     role: user.role
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN
-  });
+  const options: SignOptions = {
+    expiresIn: JWT_EXPIRES_IN as any
+  };
+
+  return jwt.sign(payload, JWT_SECRET, options);
 };
 
 // Verify JWT token

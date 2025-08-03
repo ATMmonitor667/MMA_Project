@@ -2,6 +2,7 @@ import './App.css';
 import FighterCard from './components/Fighter/FighterCard'
 import Navbar from './components/Navbar/Navbar';
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import MMAHomepage from './pages/HomePage';
 type FighterStats = {
   first_name: string;
   last_name: string;
@@ -26,7 +27,13 @@ function App() {
   };
 
   return (
-    <Navbar></Navbar>
+    <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MMAHomepage></MMAHomepage>} />
+        </Routes>
+      </Router>
+    </>
   );
 }
 

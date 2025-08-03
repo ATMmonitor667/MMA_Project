@@ -1,0 +1,193 @@
+:root { --header-h: 64px; }               /* set to your real header height */
+.hero-section { min-height: calc(100vh - var(--header-h)); }
+
+.mma-homepage {
+  --mma-homepage-bg: #000; /* Default background color */
+  --mma-homepage-text: #fff; /* Default text color */
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-width: none;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  background-color: var(--mma-homepage-bg);
+  color: var(--mma-homepage-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mma-homepage,
+.homepage-container {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+}
+
+/* ===== Hero Section ===== */
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background image */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+
+  /* Use ONE of the two approaches below */
+
+  /* A) File in /public → absolute path from web root */
+  /* background-image: url("/170535-ufc-fighters-wallpaper.jpg"); */
+
+  /* B) File in src/assets → relative path (no double slash) */
+  background-image: url("../assets/170535-ufc-fighters-wallpaper.jpg");
+
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Overlays */
+.hero-overlay-vertical {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.8)
+  );
+}
+
+.hero-overlay-horizontal {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.6), transparent, rgba(0, 0, 0, 0.6));
+}
+
+/* Content */
+.hero-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 0 1rem;
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 1000ms ease, transform 1000ms ease;
+  -webkit-transform: translateY(32px);
+  -moz-transform: translateY(32px);
+  -ms-transform: translateY(32px);
+  -o-transform: translateY(32px);
+}
+
+.hero-content.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Headings */
+.hero-title {
+  margin: 0 0 1rem;
+  line-height: 1.05;
+  font-weight: 800;
+  font-size: clamp(3rem, 9vw, 6rem);
+  letter-spacing: -0.02em;
+}
+
+.title-gradient {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.title-plain {
+  color: #fff;
+}
+
+.hero-subtitle {
+  margin: 0 auto 2rem;
+  max-width: 48rem;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  color: #d1d5db; /* gray-300 */
+  line-height: 1.7;
+}
+
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 0.9rem 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  transition: transform 300ms ease, background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+  cursor: pointer;
+  will-change: transform;
+}
+.btn:hover { transform: scale(1.05); }
+
+.btn-primary { background: #dc2626; color: #fff; }
+.btn-primary:hover { background: #b91c1c; }
+.btn-outline { background: transparent; color: #fff; border-color: #fff; }
+.btn-outline:hover { background: #fff; color: #000; }
+
+.scroll-indicator {
+  position: absolute;
+  left: 50%;
+  bottom: 2rem;
+  transform: translateX(-50%);
+  animation: bounce 1.5s infinite;
+}
+.scroll-mouse {
+  width: 24px;
+  height: 40px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+}
+.scroll-wheel {
+  width: 4px;
+  height: 10px;
+  background: #fff;
+  border-radius: 999px;
+  margin-top: 0.5rem;
+  animation: wheel-pulse 1.2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -8px); }
+}
+@keyframes wheel-pulse {
+  0% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.3; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-content,
+  .btn,
+  .scroll-indicator .scroll-wheel {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,7 +1,7 @@
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import mmaLogo from '@/assets/mma-logo.png';
+import mmaLogo from '@/assets/mma-fight-club-logo-vector-34640674.jpg';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

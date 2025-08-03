@@ -1,5 +1,6 @@
 import './App.css';
-import FighterCard from './components/fighterCard';
+import FighterCard from './components/Fighter/FighterCard'
+import Navbar from './components/Navbar/Navbar';
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 type FighterStats = {
   first_name: string;
@@ -25,14 +26,16 @@ function App() {
   };
 
   return (
-    <>
+    <Navbar></Navbar>
+  );
+}
+
+export default App;
+
+/*    <>
       <Router>
         <Routes>
           <Route path="/" element={<FighterCard props={testData} />} />
         </Routes>
       </Router>
-    </>
-  );
-}
-
-export default App;
+    </>*/

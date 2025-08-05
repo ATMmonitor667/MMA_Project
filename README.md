@@ -12,7 +12,3 @@ Home Page which is kind of =>
 Dashboard Page for sure =>
 
 
-![alt text](image-6.png) => This is about the design of the card itself
-
-
-![alt text](image-8.png)

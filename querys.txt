@@ -1,6 +1,11 @@
 SELECT u.first_name, u.last_name, a.power, a.speed, a.durability, a.iq FROM ufc_fighter AS u
 LEFT JOIN ufc_weight_fighter AS a ON
 a.fighter_id = u.fighter_id
+Resources:
+https://lucid.app/lucidspark/0f481310-1098-4ee2-8704-34e70c4a3b24/edit?invitationId=inv_1fbe695a-cbe3-44e7-91b3-7218caae51fc&page=0_0
+
+
+
 
 ``Great question! Since you have three separate tables that combine to make a Fighter, you'll need a different approach than the User model. Here's how I'd recommend structuring it:
 
@@ -40,3 +45,9 @@ Joins: Read operations require JOINs instead of simple SELECT
 Validation: May need to validate relationships between tables
 Error Handling: More complex rollback scenarios
 Would you like me to help you implement any specific part of this Fighter model, or do you have questions about how to handle the multi-table relationships?```
+
+Possible features:
+Battle mode, level mode, and tournament mode
+=> you can level a fighter up by spending coins on them
+=> You can win coins by winning battles in the arena mode
+=> Training chamber => this could be another page all on its own

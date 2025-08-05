@@ -111,26 +111,6 @@ export async function createTable(): Promise<void>
 
 }
 
-/*hashPassword
-
-verifyPassword
-
-createUserTable
-
-createUser
-
-findUserByEmail
-
-findUserByUsername
-
-findUserById
-
-updateUser
-
-deleteUser
-
-findAllUsers*/
-
 export async function findFighterById(fighterId: number): Promise<Fighter | void> {
   const query =
   `SELECT * FROM ufc_fighter

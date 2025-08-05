@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom animations */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 5s linear infinite;
+}
+
+/* Text shadow utility */
+.text-shadow-lg {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Card gradient border effect */
+.gradient-border {
+  background: linear-gradient(#9b0937, #690525) padding-box,
+              linear-gradient(135deg, #4b0fb4, #690638, #e29106, #59e8b8) border-box;
+  background-clip: padding-box, border-box;
+}

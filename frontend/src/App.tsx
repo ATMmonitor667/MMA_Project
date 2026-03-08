@@ -1,37 +1,60 @@
 import './App.css';
-import FighterCard from './components/fighterCard';
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
-type FighterStats = {
-  first_name: string;
-  last_name: string;
-  description: string;
-  power: number;
-  speed: number;
-  durability: number;
-  iq: number;
-  image: string;
-};
 
-function App() {
-  const testData: FighterStats = {
-    first_name: 'Illia',
-    last_name: 'Topuria',
-    description: 'Powerful striker with a strong wrestling background.',
-    power: 95,
-    speed: 90,
-    durability: 85,
-    iq: 88,
-    image: '/TOPURIA_ILIA_L_BELT_10-26.avif'
-  };
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar/Navbar';
 
+import HomePage from './pages/HomePage';
+import DashBoard from './pages/DashBoard';
+import CardStore from './pages/CardStore';
+import FighterCardPage from './pages/FighterCardPage';
+import Listings from './pages/Listings';
+import UserProfile from './pages/UserProfile';
+import BattleArena from './pages/BattleArena';
+import Leaderboard from './pages/Leaderboard';
+import Login from './components/Login/Login';
+import Signup from './components/Signup/Signup';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <p className="text-yellow-400 text-xl animate-pulse">Loading...</p>
+    </div>
+  );
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function AppRoutes() {
   return (
     <>
-      <Router>
-        <Routes>
-          <Route path="/" element={<FighterCard props={testData} />} />
-        </Routes>
-      </Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+
+        <Route path="/dashboard" element={<ProtectedRoute><DashBoard /></ProtectedRoute>} />
+        <Route path="/store" element={<ProtectedRoute><CardStore /></ProtectedRoute>} />
+        <Route path="/collection" element={<ProtectedRoute><FighterCardPage /></ProtectedRoute>} />
+        <Route path="/marketplace" element={<ProtectedRoute><Listings /></ProtectedRoute>} />
+        <Route path="/battle" element={<ProtectedRoute><BattleArena /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
   );
 }
 

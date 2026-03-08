@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CollectionItem, RARITY_COLORS, RARITY_LABELS, RARITY_BORDER, RARITY_BG } from '../../types';
 
 interface FighterCardProps {

@@ -1,0 +1,225 @@
+================================================================================
+                        MMA CARD GAME — PROJECT PLAN
+================================================================================
+
+WHAT'S ALREADY BUILT
+---------------------
+- Full JWT auth system (register, login, role-based access)
+- PostgreSQL with 100+ UFC fighters and stats (power, speed, durability, IQ)
+- Express backend skeleton + React/Tailwind frontend shells
+
+
+================================================================================
+CARD RARITY TIERS
+================================================================================
+
+Tier | Rarity      | Drop Rate | Stat Multiplier | Color
+-----|-------------|-----------|-----------------|-------------------
+  1  | Common      |   45%     |      1.0x       | Grey
+  2  | Uncommon    |   25%     |      1.15x      | Green
+  3  | Rare        |   15%     |      1.3x       | Blue
+  4  | Super Rare  |    8%     |      1.5x       | Purple
+  5  | Epic        |    4%     |      1.75x      | Orange
+  6  | Legendary   |    2.5%   |      2.0x       | Gold
+  7  | Ultra Rare  |    0.5%   |      2.5x       | Red/Holographic
+
+Each rarity also adds bonus perks:
+  - Legendary: gets a signature move
+  - Ultra Rare: gets a passive ability + unique card art
+
+
+================================================================================
+PHASE 1 — DATABASE & CARD SYSTEM
+================================================================================
+
+NEW TABLES TO ADD
+-----------------
+
+fighter_card — the actual card instance
+  - fighter_id
+  - rarity
+  - level (1-10)
+  - xp
+  - combat_power
+  - power_stat
+  - speed_stat
+  - durability_stat
+  - iq_stat
+  - signature_move (nullable)
+  - passive_ability (nullable)
+  - card_art_variant
+  - created_at
+
+user_collection — cards owned by users
+  - collection_id
+  - user_id
+  - fighter_card_id
+  - acquired_at
+  - is_for_trade
+  - trade_price (nullable)
+  - is_in_deck
+
+trade_listing — marketplace
+  - listing_id
+  - seller_id
+  - card_id
+  - asking_price (coins)
+  - asking_card_id (nullable, for card-for-card swaps)
+  - status (active / completed / cancelled)
+  - created_at
+
+battle — battle history
+  - battle_id
+  - challenger_id
+  - opponent_id
+  - challenger_card_id
+  - opponent_card_id
+  - winner_id
+  - rounds (JSON)
+  - xp_gained
+  - coins_won
+  - battle_type (pvp / ai)
+  - created_at
+
+user_wallet — in-game currency
+  - wallet_id
+  - user_id
+  - coins
+  - gems
+  - last_updated
+
+card_pack — pack types for the store
+  - pack_id
+  - name
+  - description
+  - cost_coins
+  - cost_gems
+  - rarity_weights (JSON)
+  - cards_per_pack
+
+
+================================================================================
+PHASE 2 — BACKEND FEATURES
+================================================================================
+
+CARD PACK / COLLECTION SYSTEM
+------------------------------
+- POST /api/packs/open
+    Open a pack, generates cards with weighted rarity rolls,
+    applies stat multipliers, credits to user_collection
+
+- GET /api/collection
+    Get authenticated user's full card collection
+
+- GET /api/collection/:userId
+    View another user's public collection
+
+CARD LEVELING
+-------------
+- Cards gain XP from battles
+- Level 1-10; each level boosts all stats by ~8%
+- Combat Power = weighted average of stats x rarity multiplier x level bonus
+
+TRADING SYSTEM
+--------------
+- POST   /api/trade/list              List a card for trade (coin price or card-for-card)
+- GET    /api/trade/listings          Browse all active listings (filter by rarity, fighter, price)
+- POST   /api/trade/offer             Make an offer on a listing
+- PUT    /api/trade/accept/:listingId Accept offer, swap ownership atomically
+- DELETE /api/trade/cancel/:listingId Cancel own listing
+
+BATTLE SYSTEM
+-------------
+Battle Resolution Algorithm:
+  1. Each fighter rolls base stats + level bonus + rarity multiplier
+  2. 3 rounds: each round picks a random stat category (power, speed, durability, IQ)
+  3. Add +-10% randomness (RNG element)
+  4. Win 2+ rounds = match winner
+  5. Winner gains XP and coins; loser gains smaller XP consolation
+
+Endpoints:
+- POST /api/battle/challenge     Challenge another user or AI (select your card, pick opponent)
+- GET  /api/battle/history       Battle log for current user
+- GET  /api/battle/leaderboard   Ranked by wins / combat power
+
+STORE
+-----
+- GET  /api/store/packs   List available card packs
+- POST /api/store/buy     Purchase a pack with coins or gems
+- GET  /api/wallet        Get user coin and gem balance
+
+
+================================================================================
+PHASE 3 — FRONTEND
+================================================================================
+
+PAGES TO BUILD
+--------------
+HomePage        Landing with featured fighters, recent battles, leaderboard snippet
+Dashboard       User's collection summary, recent activity, quick-battle button
+Card Store      Pack browser with animated pack-opening sequence
+My Collection   Grid of owned cards, filterable by rarity / fighter / level
+Card Detail     Full card view — stats radar chart, battle history, trade button
+Marketplace     Browse trade listings, filter/search, make offers
+Battle Arena    Pick card -> matchmake or challenge friend -> animated battle resolution
+Leaderboard     Top collectors and top battlers
+User Profile    Public profile showing collection, win rate, trade history
+
+KEY COMPONENTS
+--------------
+FighterCard
+  - Front: Fighter image, name, rarity badge (color-coded holographic border), combat power
+  - Back:  Full stats (radar/spider chart), level bar, signature move, passive ability
+  - Rarity glow effects using Tailwind CSS
+
+PackOpeningAnimation
+  - Cards flip one by one with glow reveal on high rarity pulls
+
+BattleView
+  - Animated round-by-round battle breakdown showing stat clashes per round
+
+TradeModal
+  - Offer/accept flow with card preview shown on both sides
+
+
+================================================================================
+PHASE 4 — ENHANCEMENTS
+================================================================================
+
+- Daily Login Rewards    Free coins/gems per day
+- Achievements           "First Legendary", "10 Wins", "Complete a Weight Class", etc.
+- Deck Builder           Select 5 cards as your active battle deck
+- Tournaments            Bracket-style scheduled events with gem prizes
+- Card Fusion            Combine two same-rarity cards to attempt a rarity upgrade
+- Chatbot                AI assistant for battle tips and fighter info (routes already exist)
+
+
+================================================================================
+RECOMMENDED BUILD ORDER
+================================================================================
+
+  1.  DB schema additions (fighter_card, user_collection, wallet, trade, battle)
+  2.  Card generation logic (rarity roll + stat calculation)
+  3.  Pack opening endpoint
+  4.  User collection CRUD
+  5.  Frontend: FighterCard component + Collection page
+  6.  Trading system (backend + frontend)
+  7.  Battle engine (backend logic + frontend animation)
+  8.  Store page + pack opening animation
+  9.  Leaderboard + profiles
+  10. Polish: achievements, daily rewards, tournaments
+
+
+================================================================================
+NOTE ON DATABASE DESIGN
+================================================================================
+
+The existing ufc_fighter and ufc_weight_fighter tables stay as the source of
+truth for raw fighter data. The fighter_card table references them but adds
+rarity, level, and card-specific fields.
+
+This means the same fighter (e.g. Jon Jones) can exist as a Common card AND
+a Legendary card simultaneously — each with different stats, art, and abilities.
+
+
+================================================================================

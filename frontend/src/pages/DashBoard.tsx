@@ -3,21 +3,56 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCollection } from '../api/cards';
 import { getBattleHistory } from '../api/battle';
+import { getDailyStatus } from '../api/dailyReward';
+import { getAchievements } from '../api/achievements';
+import { getNews } from '../api/news';
+import DailyRewardModal from '../components/DailyReward/DailyRewardModal';
 import type { CollectionItem } from '../types';
 import { RARITY_LABELS, RARITY_COLORS } from '../types';
+
+interface NewsArticle {
+  id: string;
+  headline: string;
+  description: string;
+  published: string;
+  link: string;
+  image?: string;
+}
 
 export default function Dashboard() {
   const { user, wallet, refreshWallet } = useAuth();
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [battles, setBattles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDailyReward, setShowDailyReward] = useState(false);
+  const [canClaim, setCanClaim] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [unlockedCount, setUnlockedCount] = useState(0);
+  const [totalAchievements, setTotalAchievements] = useState(0);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getCollection().then((d: any) => setCollection(d.data.collection)),
       getBattleHistory().then((d: any) => setBattles(d.data.history)),
       refreshWallet(),
+      getDailyStatus().then((d: any) => {
+        setCanClaim(d.data.status.can_claim);
+        setStreak(d.data.status.streak_count);
+        // Auto-show modal if reward is available
+        if (d.data.status.can_claim) setShowDailyReward(true);
+      }).catch(() => {}),
+      getAchievements().then((d: any) => {
+        setUnlockedCount(d.data.unlocked);
+        setTotalAchievements(d.data.total);
+      }).catch(() => {}),
     ]).finally(() => setLoading(false));
+
+    getNews()
+      .then((d: any) => setNews(d.data.articles ?? []))
+      .catch(() => {})
+      .finally(() => setNewsLoading(false));
   }, []);
 
   const wins = battles.filter((b: any) => b.winner_id === user?.user_id).length;
@@ -42,12 +77,35 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#050810] text-white">
+      {showDailyReward && (
+        <DailyRewardModal onClose={() => { setShowDailyReward(false); setCanClaim(false); }} />
+      )}
+
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
 
         {/* Header */}
-        <div className="mb-8">
-          <p className="text-gray-500 text-sm mb-1">Welcome back</p>
-          <h1 className="text-4xl font-black text-gradient-gold">{user?.username}</h1>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <p className="text-gray-500 text-sm mb-1">Welcome back</p>
+            <h1 className="text-4xl font-black text-gradient-gold">{user?.username}</h1>
+          </div>
+          {/* Daily reward bell */}
+          <button
+            type="button"
+            onClick={() => setShowDailyReward(true)}
+            className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all hover:scale-105"
+            style={{
+              borderColor: canClaim ? 'rgba(234,179,8,0.5)' : 'rgba(255,255,255,0.08)',
+              background: canClaim ? 'rgba(234,179,8,0.12)' : 'rgba(255,255,255,0.03)',
+              color: canClaim ? '#fbbf24' : '#6b7280',
+              boxShadow: canClaim ? '0 0 20px rgba(234,179,8,0.2)' : 'none',
+            }}
+          >
+            {canClaim && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
+            )}
+            🎁 {canClaim ? 'Claim Reward!' : streak > 0 ? `${streak}-day streak` : 'Daily Reward'}
+          </button>
         </div>
 
         {/* Top stats */}
@@ -137,31 +195,53 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Battle record */}
-          <div className="rounded-2xl border border-white/5 p-5"
-            style={{ background: 'linear-gradient(160deg,rgba(255,255,255,0.03),#0d0d16)' }}>
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Battle Record</h2>
-            <div className="flex gap-4 mb-4">
-              {([
-                { label: 'Wins',   val: wins,           color: '#22c55e' },
-                { label: 'Losses', val: losses,          color: '#ef4444' },
-                { label: 'Total',  val: battles.length,  color: '#a855f7' },
-              ] as const).map(s => (
-                <div key={s.label} className="text-center flex-1">
-                  <p className="text-2xl font-black" style={{ color: s.color }}>{s.val}</p>
-                  <p className="text-xs text-gray-500">{s.label}</p>
-                </div>
-              ))}
-            </div>
-            {battles.length > 0 && (
-              <div className="h-2 rounded-full bg-black/40 overflow-hidden">
-                <div className="h-full rounded-full"
-                  style={{ width: `${winRate}%`, background: 'linear-gradient(90deg,#16a34a,#4ade80)' }} />
+          {/* Battle record + achievements combined */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-white/5 p-5 flex-1"
+              style={{ background: 'linear-gradient(160deg,rgba(255,255,255,0.03),#0d0d16)' }}>
+              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Battle Record</h2>
+              <div className="flex gap-4 mb-3">
+                {([
+                  { label: 'Wins',   val: wins,           color: '#22c55e' },
+                  { label: 'Losses', val: losses,          color: '#ef4444' },
+                  { label: 'Total',  val: battles.length,  color: '#a855f7' },
+                ] as const).map(s => (
+                  <div key={s.label} className="text-center flex-1">
+                    <p className="text-2xl font-black" style={{ color: s.color }}>{s.val}</p>
+                    <p className="text-xs text-gray-500">{s.label}</p>
+                  </div>
+                ))}
               </div>
-            )}
-            {battles.length === 0 && (
-              <Link to="/battle" className="text-green-400 text-sm font-bold hover:text-green-300">Start battling →</Link>
-            )}
+              {battles.length > 0 && (
+                <div className="h-1.5 rounded-full bg-black/40 overflow-hidden">
+                  <div className="h-full rounded-full"
+                    style={{ width: `${winRate}%`, background: 'linear-gradient(90deg,#16a34a,#4ade80)' }} />
+                </div>
+              )}
+              {battles.length === 0 && (
+                <Link to="/battle" className="text-green-400 text-sm font-bold hover:text-green-300">Start battling →</Link>
+              )}
+            </div>
+
+            {/* Achievements mini */}
+            <Link to="/achievements"
+              className="rounded-2xl border border-white/5 p-4 hover:border-yellow-500/30 transition-all group"
+              style={{ background: 'linear-gradient(160deg,rgba(234,179,8,0.05),#0d0d16)' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Achievements</p>
+                  <p className="text-2xl font-black text-yellow-400">
+                    {unlockedCount} <span className="text-base text-gray-500">/ {totalAchievements}</span>
+                  </p>
+                </div>
+                <span className="text-2xl group-hover:scale-110 transition-transform">🏆</span>
+              </div>
+              <div className="mt-2 h-1.5 rounded-full bg-black/40 overflow-hidden">
+                <div className="h-full rounded-full"
+                  style={{ width: `${totalAchievements > 0 ? Math.round(unlockedCount / totalAchievements * 100) : 0}%`,
+                    background: 'linear-gradient(90deg,#d97706,#fbbf24)' }} />
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -205,13 +285,58 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* UFC News Feed */}
+        <div className="rounded-2xl border border-white/5 p-5 mb-8"
+          style={{ background: 'linear-gradient(160deg,rgba(239,68,68,0.04),#0d0d16)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">UFC News</h2>
+            <span className="text-xs text-gray-600">via ESPN</span>
+          </div>
+          {newsLoading ? (
+            <div className="flex items-center gap-3 py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-red-500/50 border-t-transparent animate-spin" />
+              <p className="text-gray-600 text-sm">Loading news...</p>
+            </div>
+          ) : news.length === 0 ? (
+            <p className="text-gray-600 text-sm py-2">No news available right now.</p>
+          ) : (
+            <div className="space-y-3">
+              {news.slice(0, 4).map((article) => (
+                <a
+                  key={article.id}
+                  href={article.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-3 p-3 rounded-xl border border-white/5 hover:border-white/10 transition-all hover:bg-white/3 group"
+                >
+                  {article.image && (
+                    <img
+                      src={article.image}
+                      alt=""
+                      className="w-16 h-12 rounded-lg object-cover shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white leading-tight line-clamp-2 group-hover:text-yellow-300 transition-colors">
+                      {article.headline}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(article.published).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Quick actions */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {([
-            { to: '/store',       label: 'Open Packs',  icon: '📦', grad: 'linear-gradient(135deg,#92400e,#f59e0b)' },
-            { to: '/battle',      label: 'Battle',      icon: '⚔',  grad: 'linear-gradient(135deg,#14532d,#22c55e)' },
-            { to: '/collection',  label: 'Collection',  icon: '🃏', grad: 'linear-gradient(135deg,#1e3a8a,#3b82f6)' },
-            { to: '/marketplace', label: 'Marketplace', icon: '🔄', grad: 'linear-gradient(135deg,#581c87,#a855f7)' },
+            { to: '/store',        label: 'Open Packs',   icon: '📦', grad: 'linear-gradient(135deg,#92400e,#f59e0b)' },
+            { to: '/battle',       label: 'Battle',       icon: '⚔',  grad: 'linear-gradient(135deg,#14532d,#22c55e)' },
+            { to: '/collection',   label: 'Collection',   icon: '🃏', grad: 'linear-gradient(135deg,#1e3a8a,#3b82f6)' },
+            { to: '/achievements', label: 'Achievements', icon: '🏆', grad: 'linear-gradient(135deg,#78350f,#d97706)' },
           ] as const).map(a => (
             <Link key={a.to} to={a.to}
               className="flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-sm text-white transition-all hover:scale-105 active:scale-95 hover:brightness-110"

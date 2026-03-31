@@ -12,6 +12,7 @@ import Listings from './pages/Listings';
 import UserProfile from './pages/UserProfile';
 import BattleArena from './pages/BattleArena';
 import Leaderboard from './pages/Leaderboard';
+import Achievements from './pages/Achievements';
 import Login from './components/Login/Login';
 import Signup from './components/Signup/Signup';
 
@@ -41,6 +42,7 @@ function AppRoutes() {
         <Route path="/marketplace" element={<ProtectedRoute><Listings /></ProtectedRoute>} />
         <Route path="/battle" element={<ProtectedRoute><BattleArena /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

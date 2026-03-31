@@ -3,12 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const navLinks = [
-  { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
-  { to: '/collection', label: 'Collection', icon: '🃏' },
-  { to: '/store', label: 'Store', icon: '📦' },
-  { to: '/marketplace', label: 'Market', icon: '🔄' },
-  { to: '/battle', label: 'Battle', icon: '⚔' },
-  { to: '/leaderboard', label: 'Ranks', icon: '🏆' },
+  { to: '/dashboard',    label: 'Dashboard',    icon: '🏠' },
+  { to: '/collection',   label: 'Collection',   icon: '🃏' },
+  { to: '/store',        label: 'Store',        icon: '📦' },
+  { to: '/marketplace',  label: 'Market',       icon: '🔄' },
+  { to: '/battle',       label: 'Battle',       icon: '⚔'  },
+  { to: '/leaderboard',  label: 'Ranks',        icon: '📊' },
+  { to: '/achievements', label: 'Achievements', icon: '🏆' },
 ];
 
 export default function Navbar() {

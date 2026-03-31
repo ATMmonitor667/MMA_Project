@@ -3,7 +3,8 @@ import { getLeaderboard } from '../api/battle';
 import type { LeaderboardEntry } from '../types';
 import { useAuth } from '../context/AuthContext';
 
-const medals = ['🥇', '🥈', '🥉'];
+const podiumColors = ['#eab308', '#9ca3af', '#b45309'];
+const podiumGlows  = ['rgba(234,179,8,0.4)', 'rgba(156,163,175,0.3)', 'rgba(180,83,9,0.3)'];
 
 export default function Leaderboard() {
   const { user } = useAuth();
@@ -15,73 +16,108 @@ export default function Leaderboard() {
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <p className="text-yellow-400 animate-pulse text-xl">Loading leaderboard...</p>
+    <div className="min-h-screen bg-[#050810] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin" />
+        <p className="text-yellow-400 font-bold">Loading leaderboard...</p>
+      </div>
     </div>
   );
 
+  const top3 = entries.slice(0, 3);
+  const rest = entries.slice(3);
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-black text-white mb-2">🏆 Leaderboard</h1>
-        <p className="text-gray-400 mb-8">Top fighters ranked by battle wins.</p>
+    <div className="min-h-screen bg-[#050810] text-white">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <p className="text-gray-500 text-sm mb-1 uppercase tracking-wider">Hall of Fame</p>
+          <h1 className="text-4xl font-black text-white">🏆 <span className="text-gradient-gold">Leaderboard</span></h1>
+          <p className="text-gray-500 mt-2">Top fighters ranked by battle wins</p>
+        </div>
 
         {entries.length === 0 ? (
-          <p className="text-gray-500 text-center py-16">No battle data yet. Start fighting!</p>
-        ) : (
-          <div className="space-y-2">
-            {entries.map((entry, i) => {
-              const isMe = entry.user_id === user?.user_id;
-              return (
-                <div
-                  key={entry.user_id}
-                  className={`flex items-center gap-4 p-4 rounded-xl border transition-colors ${
-                    isMe
-                      ? 'bg-yellow-900/20 border-yellow-600'
-                      : i < 3
-                      ? 'bg-gray-800 border-gray-600'
-                      : 'bg-gray-900 border-gray-800'
-                  }`}
-                >
-                  {/* Rank */}
-                  <div className="w-10 text-center">
-                    {i < 3 ? (
-                      <span className="text-2xl">{medals[i]}</span>
-                    ) : (
-                      <span className="text-gray-500 font-bold text-lg">#{i + 1}</span>
-                    )}
-                  </div>
-
-                  {/* Username */}
-                  <div className="flex-1">
-                    <span className={`font-black text-lg ${isMe ? 'text-yellow-400' : 'text-white'}`}>
-                      {entry.username} {isMe && '(You)'}
-                    </span>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex gap-6 text-sm text-right">
-                    <div>
-                      <p className="text-green-400 font-black text-lg">{entry.wins}</p>
-                      <p className="text-gray-500 text-xs">Wins</p>
-                    </div>
-                    <div>
-                      <p className="text-red-400 font-black text-lg">{entry.losses}</p>
-                      <p className="text-gray-500 text-xs">Losses</p>
-                    </div>
-                    <div>
-                      <p className="text-cyan-400 font-black text-lg">{entry.win_rate}%</p>
-                      <p className="text-gray-500 text-xs">Win Rate</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-300 font-black text-lg">{entry.total_battles}</p>
-                      <p className="text-gray-500 text-xs">Battles</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-center py-20 rounded-2xl border border-white/5"
+            style={{ background: 'linear-gradient(160deg,rgba(255,255,255,0.02),#0d0d16)' }}>
+            <div className="text-5xl mb-4">⚔</div>
+            <p className="text-gray-400 font-bold mb-1">No battles yet</p>
+            <p className="text-gray-600 text-sm">Be the first to claim glory!</p>
           </div>
+        ) : (
+          <>
+            {/* Podium — top 3 */}
+            {top3.length > 0 && (
+              <div className="flex items-end justify-center gap-4 mb-10">
+                {[top3[1], top3[0], top3[2]].map((entry, displayIdx) => {
+                  if (!entry) return <div key={displayIdx} className="w-28" />;
+                  const rankIdx = top3.indexOf(entry);
+                  const color = podiumColors[rankIdx];
+                  const glow  = podiumGlows[rankIdx];
+                  const isMe  = entry.user_id === user?.user_id;
+                  const podiumH = ['h-28', 'h-36', 'h-24'][displayIdx];
+                  return (
+                    <div key={entry.user_id} className="flex flex-col items-center gap-2 w-28">
+                      <div className="w-full rounded-2xl border-2 p-3 text-center transition-all hover:scale-105"
+                        style={{
+                          borderColor: color,
+                          background: `linear-gradient(160deg,${color}22,#0d0d16)`,
+                          boxShadow: `0 0 30px ${glow}`,
+                        }}>
+                        <div className="text-3xl mb-1">{['🥈','🥇','🥉'][displayIdx]}</div>
+                        <p className="font-black text-sm truncate" style={{ color }}>
+                          {entry.username}{isMe ? ' ★' : ''}
+                        </p>
+                        <p className="text-white font-black text-lg">{entry.wins}</p>
+                        <p className="text-gray-500 text-xs">wins</p>
+                        <p className="text-xs font-bold mt-1" style={{ color }}>{entry.win_rate}%</p>
+                      </div>
+                      <div className={`w-full ${podiumH} rounded-t-xl flex items-center justify-center font-black text-2xl`}
+                        style={{ background: `linear-gradient(180deg,${color}44,${color}22)`, border: `1px solid ${color}44` }}>
+                        {rankIdx + 1}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Remaining entries */}
+            {rest.length > 0 && (
+              <div className="rounded-2xl border border-white/5 overflow-hidden"
+                style={{ background: 'linear-gradient(160deg,rgba(255,255,255,0.02),#0d0d16)' }}>
+                <div className="px-5 py-3 border-b border-white/5 grid grid-cols-12 text-xs font-black uppercase tracking-wider text-gray-600">
+                  <span className="col-span-1">#</span>
+                  <span className="col-span-4">Player</span>
+                  <span className="col-span-2 text-right">Wins</span>
+                  <span className="col-span-2 text-right">Losses</span>
+                  <span className="col-span-2 text-right">Win%</span>
+                  <span className="col-span-1 text-right">Total</span>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {rest.map((entry, i) => {
+                    const isMe = entry.user_id === user?.user_id;
+                    return (
+                      <div key={entry.user_id}
+                        className="px-5 py-3 grid grid-cols-12 items-center"
+                        style={{ background: isMe ? 'rgba(234,179,8,0.06)' : undefined }}>
+                        <span className="col-span-1 text-gray-600 font-black text-sm">#{i + 4}</span>
+                        <span className="col-span-4 font-black text-sm truncate"
+                          style={{ color: isMe ? '#eab308' : '#fff' }}>
+                          {entry.username}{isMe ? ' ★' : ''}
+                        </span>
+                        <span className="col-span-2 text-right text-green-400 font-black">{entry.wins}</span>
+                        <span className="col-span-2 text-right text-red-400 font-bold">{entry.losses}</span>
+                        <span className="col-span-2 text-right text-cyan-400 font-black">{entry.win_rate}%</span>
+                        <span className="col-span-1 text-right text-gray-500 text-sm">{entry.total_battles}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

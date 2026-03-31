@@ -4,6 +4,8 @@ import { RARITY_COLORS, RARITY_LABELS } from '../types';
 import { getListings, acceptOffer, cancelListing, getMyListings } from '../api/trade';
 import { useAuth } from '../context/AuthContext';
 
+const RARITIES = ['', 'common', 'uncommon', 'rare', 'super_rare', 'epic', 'legendary', 'ultra_rare'];
+
 export default function Marketplace() {
   const { user, refreshWallet } = useAuth();
   const [listings, setListings] = useState<TradeListing[]>([]);
@@ -56,110 +58,148 @@ export default function Marketplace() {
 
   const ListingCard = ({ listing, isMine }: { listing: any; isMine: boolean }) => {
     const color = RARITY_COLORS[listing.rarity as keyof typeof RARITY_COLORS] ?? '#9CA3AF';
+    const isLoading = actionId === listing.listing_id;
+    const isOwn = listing.seller_id === user?.user_id;
     return (
-      <div
-        className="bg-gray-900 border-2 rounded-xl p-4 flex flex-col gap-3"
-        style={{ borderColor: color }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl" style={{ background: `${color}22` }}>
-            🥊
+      <div className="relative rounded-2xl border overflow-hidden flex flex-col transition-all hover:scale-[1.02]"
+        style={{
+          borderColor: `${color}44`,
+          background: `linear-gradient(160deg,${color}10,#0d0d16)`,
+          boxShadow: `0 4px 20px ${color}15`,
+        }}>
+        <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg,${color},transparent)` }} />
+        <div className="p-4 flex flex-col gap-3 flex-1">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+              style={{ background: `${color}22`, border: `1px solid ${color}44` }}>
+              🥊
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-white truncate">{listing.first_name} {listing.last_name}</p>
+              <span className="text-xs font-black px-2 py-0.5 rounded-full text-black inline-block mt-0.5"
+                style={{ backgroundColor: color }}>
+                {RARITY_LABELS[listing.rarity as keyof typeof RARITY_LABELS]}
+              </span>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="font-black text-white">{listing.first_name} {listing.last_name}</p>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full text-black" style={{ backgroundColor: color }}>
-              {RARITY_LABELS[listing.rarity as keyof typeof RARITY_LABELS]}
-            </span>
+
+          <div className="flex gap-3 text-xs">
+            {[
+              { label: 'CP', val: listing.combat_power },
+              { label: 'Level', val: listing.level },
+            ].map(s => (
+              <div key={s.label} className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                <p className="text-gray-500 mb-0.5">{s.label}</p>
+                <p className="font-black text-white">{s.val}</p>
+              </div>
+            ))}
+            <div className="flex-1 rounded-lg p-2 text-center" style={{ background: 'rgba(0,0,0,0.3)' }}>
+              <p className="text-gray-500 mb-0.5">Price</p>
+              <p className="font-black text-yellow-400">
+                {listing.asking_price === 0 ? 'FREE' : listing.asking_price.toLocaleString()}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-yellow-400 font-black">{listing.asking_price === 0 ? 'FREE' : `🪙 ${listing.asking_price.toLocaleString()}`}</p>
-            <p className="text-gray-500 text-xs">CP {listing.combat_power} · Lv.{listing.level}</p>
-          </div>
+
+          <p className="text-xs text-gray-600">by <span className="text-gray-400">{listing.seller_username}</span></p>
+
+          {isMine ? (
+            <button type="button" onClick={() => handleCancel(listing.listing_id)} disabled={isLoading}
+              className="w-full py-2.5 rounded-xl font-black text-sm text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+              style={{ background: isLoading ? '#374151' : 'linear-gradient(135deg,#7f1d1d,#ef4444)' }}>
+              {isLoading ? 'Cancelling...' : '✕ Cancel Listing'}
+            </button>
+          ) : (
+            <button type="button" onClick={() => handleBuy(listing)} disabled={isLoading || isOwn}
+              className="w-full py-2.5 rounded-xl font-black text-sm text-black transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{ background: isOwn || isLoading ? '#374151' : `linear-gradient(135deg,${color},${color}cc)`,
+                color: isOwn || isLoading ? '#9ca3af' : '#000' }}>
+              {isOwn ? 'Your Listing' : isLoading ? 'Buying...' : `🪙 Buy — ${listing.asking_price === 0 ? 'FREE' : listing.asking_price.toLocaleString()}`}
+            </button>
+          )}
         </div>
-        <div className="text-xs text-gray-500">Seller: {listing.seller_username}</div>
-        {isMine ? (
-          <button
-            type="button"
-            onClick={() => handleCancel(listing.listing_id)}
-            disabled={actionId === listing.listing_id}
-            className="w-full py-2 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold text-sm transition-colors disabled:opacity-50"
-          >
-            {actionId === listing.listing_id ? 'Cancelling...' : 'Cancel Listing'}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => handleBuy(listing)}
-            disabled={actionId === listing.listing_id || listing.seller_id === user?.user_id}
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {listing.seller_id === user?.user_id ? 'Your Listing' : actionId === listing.listing_id ? 'Buying...' : 'Buy Now'}
-          </button>
-        )}
       </div>
     );
   };
 
+  const activeListings = tab === 'browse' ? listings : myListings;
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black text-white mb-2">Marketplace</h1>
-        <p className="text-gray-400 mb-6">Buy and sell fighter cards with other players.</p>
+    <div className="min-h-screen bg-[#050810] text-white">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+
+        <div className="mb-8">
+          <p className="text-gray-500 text-sm mb-1 uppercase tracking-wider">Trading Post</p>
+          <h1 className="text-4xl font-black text-white">🔄 <span className="text-gradient-gold">Marketplace</span></h1>
+          <p className="text-gray-400 mt-1">Buy and sell fighter cards with other players.</p>
+        </div>
 
         {(error || success) && (
-          <div className={`mb-4 p-3 rounded-lg border ${error ? 'bg-red-900/50 border-red-700 text-red-300' : 'bg-green-900/50 border-green-700 text-green-300'}`}>
-            {error || success}
+          <div className={`mb-6 p-4 rounded-xl border flex items-center gap-2 text-sm ${
+            error ? 'bg-red-900/20 border-red-500/30 text-red-300' : 'bg-green-900/20 border-green-500/30 text-green-300'
+          }`}>
+            <span>{error ? '⚠' : '✓'}</span> {error || success}
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-1 mb-6 p-1 rounded-xl border border-white/5 w-fit"
+          style={{ background: 'rgba(0,0,0,0.3)' }}>
           {(['browse', 'mine'] as const).map(t => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${tab === t ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-            >
+            <button key={t} type="button" onClick={() => setTab(t)}
+              className="px-5 py-2 rounded-lg font-black text-sm transition-all"
+              style={{
+                background: tab === t ? 'linear-gradient(135deg,#92400e,#f59e0b)' : 'transparent',
+                color: tab === t ? '#000' : '#9ca3af',
+              }}>
               {t === 'browse' ? '🛒 Browse' : '📋 My Listings'}
             </button>
           ))}
         </div>
 
-        {/* Rarity filter (browse tab) */}
+        {/* Rarity filter */}
         {tab === 'browse' && (
-          <div className="flex flex-wrap gap-2 mb-5">
-            {['', 'common', 'uncommon', 'rare', 'super_rare', 'epic', 'legendary', 'ultra_rare'].map(r => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setFilterRarity(r)}
-                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors capitalize ${filterRarity === r ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-              >
-                {r === '' ? 'All' : r.replace('_', ' ')}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {RARITIES.map(r => {
+              const color = r ? (RARITY_COLORS[r as keyof typeof RARITY_COLORS] ?? '#f59e0b') : '#f59e0b';
+              const active = filterRarity === r;
+              return (
+                <button key={r} type="button" onClick={() => setFilterRarity(r)}
+                  className="text-xs px-3 py-1.5 rounded-full font-black transition-all hover:scale-105 capitalize"
+                  style={{
+                    background: active ? color : 'rgba(0,0,0,0.4)',
+                    color: active ? '#000' : '#9ca3af',
+                    border: `1px solid ${active ? color : 'rgba(255,255,255,0.08)'}`,
+                  }}>
+                  {r === '' ? 'All' : r.replace('_', ' ')}
+                </button>
+              );
+            })}
           </div>
         )}
 
         {loading ? (
-          <p className="text-gray-400 animate-pulse">Loading...</p>
-        ) : tab === 'browse' ? (
-          listings.length === 0 ? (
-            <p className="text-gray-500 py-12 text-center">No active listings. Be the first to list a card!</p>
-          ) : (
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {listings.map(l => <ListingCard key={l.listing_id} listing={l} isMine={false} />)}
-            </div>
-          )
+          <div className="flex items-center gap-3 py-12 justify-center">
+            <div className="w-8 h-8 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin" />
+            <span className="text-gray-400">Loading listings...</span>
+          </div>
+        ) : activeListings.length === 0 ? (
+          <div className="text-center py-20 rounded-2xl border border-white/5"
+            style={{ background: 'linear-gradient(160deg,rgba(255,255,255,0.02),#0d0d16)' }}>
+            <div className="text-5xl mb-4">🔄</div>
+            <p className="text-gray-400 font-bold mb-1">
+              {tab === 'browse' ? 'No listings yet' : 'No active listings'}
+            </p>
+            <p className="text-gray-600 text-sm">
+              {tab === 'browse' ? 'Be the first to list a card!' : 'List a card from your collection.'}
+            </p>
+          </div>
         ) : (
-          myListings.length === 0 ? (
-            <p className="text-gray-500 py-12 text-center">You have no active listings. <a href="/collection" className="text-yellow-400">List a card from your collection.</a></p>
-          ) : (
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {myListings.map(l => <ListingCard key={l.listing_id} listing={l} isMine={true} />)}
-            </div>
-          )
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {activeListings.map(l => (
+              <ListingCard key={l.listing_id} listing={l} isMine={tab === 'mine'} />
+            ))}
+          </div>
         )}
       </div>
     </div>

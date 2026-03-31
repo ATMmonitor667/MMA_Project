@@ -9,11 +9,17 @@ import packRoutes from './routes/packRoutes';
 import tradeRoutes from './routes/tradeRoutes';
 import battleRoutes from './routes/battleRoutes';
 import walletRoutes from './routes/walletRoutes';
+import dailyRewardRoutes from './routes/dailyRewardRoutes';
+import achievementRoutes from './routes/achievementRoutes';
+import newsRoutes from './routes/newsRoutes';
 import { createUserTable } from './models/User';
 import { createCardTables, seedCardPacks } from './models/Card';
 import { createWalletTable } from './models/Wallet';
 import { createTradeTable } from './models/Trade';
 import { createBattleTable } from './models/Battle';
+import { createDailyRewardTable } from './models/DailyReward';
+import { createAchievementTable } from './models/Achievement';
+import { migrateEnrichmentColumns } from './services/fighterEnrichmentService';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +38,9 @@ const initializeDatabase = async () => {
     await createWalletTable();
     await createTradeTable();
     await createBattleTable();
+    await createDailyRewardTable();
+    await createAchievementTable();
+    await migrateEnrichmentColumns();
     await seedCardPacks();
     console.log('All database tables initialized successfully');
   } catch (error) {
@@ -40,7 +49,7 @@ const initializeDatabase = async () => {
 };
 
 app.get('/', (_req, res) => {
-  res.json({ message: 'MMA Card Game API', version: '1.0.0' });
+  res.json({ message: 'MMA Card Game API', version: '2.0.0' });
 });
 
 pool.connect();
@@ -53,7 +62,10 @@ app.use('/api', packRoutes);
 app.use('/api', tradeRoutes);
 app.use('/api', battleRoutes);
 app.use('/api', walletRoutes);
+app.use('/api', dailyRewardRoutes);
+app.use('/api', achievementRoutes);
+app.use('/api', newsRoutes);
 
 app.listen(PORT, () => {
-  console.log(`The application is running on port: ${PORT}`);
+  console.log(`MMA Card Game API v2.0 running on port: ${PORT}`);
 });

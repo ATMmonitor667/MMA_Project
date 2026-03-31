@@ -2,120 +2,138 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+const navLinks = [
+  { to: '/dashboard', label: 'Dashboard', icon: '🏠' },
+  { to: '/collection', label: 'Collection', icon: '🃏' },
+  { to: '/store', label: 'Store', icon: '📦' },
+  { to: '/marketplace', label: 'Market', icon: '🔄' },
+  { to: '/battle', label: 'Battle', icon: '⚔' },
+  { to: '/leaderboard', label: 'Ranks', icon: '🏆' },
+];
+
 export default function Navbar() {
   const { user, wallet, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
 
-  const navLink = (to: string, label: string) => (
-    <Link
-      to={to}
-      className={`text-sm font-medium transition-colors hover:text-yellow-400 ${
-        location.pathname === to ? 'text-yellow-400' : 'text-gray-300'
-      }`}
-      onClick={() => setMenuOpen(false)}
-    >
-      {label}
-    </Link>
-  );
+  const isActive = (to: string) => location.pathname === to;
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-700 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 glass border-b border-white/5"
+      style={{ background: 'rgba(5,8,16,0.85)', backdropFilter: 'blur(20px)' }}>
+
+      {/* Top accent line */}
+      <div className="h-px w-full"
+        style={{ background: 'linear-gradient(90deg,transparent,#f59e0b,#ef4444,#f59e0b,transparent)' }} />
+
+      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+
         {/* Logo */}
-        <Link to="/" className="text-xl font-black text-yellow-400 tracking-wider">
-          🥊 MMA CARDS
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <span className="text-xl">🥊</span>
+          <span className="font-black text-base tracking-widest text-gradient-gold hidden sm:block">
+            MMA CARDS
+          </span>
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-6">
-          {navLink('/', 'Home')}
-          {isAuthenticated && (
-            <>
-              {navLink('/dashboard', 'Dashboard')}
-              {navLink('/collection', 'Collection')}
-              {navLink('/store', 'Store')}
-              {navLink('/marketplace', 'Marketplace')}
-              {navLink('/battle', 'Battle')}
-            </>
-          )}
-          {navLink('/leaderboard', 'Leaderboard')}
+        <div className="hidden md:flex items-center gap-1">
+          {(isAuthenticated ? navLinks : [navLinks[5]]).map(({ to, label, icon }) => (
+            <Link key={to} to={to}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200
+                ${isActive(to)
+                  ? 'bg-yellow-500/20 text-yellow-400 shadow-[0_0_12px_rgba(234,179,8,0.3)]'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+            >
+              <span className="text-base">{icon}</span>
+              {label}
+            </Link>
+          ))}
         </div>
 
         {/* Right side */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {isAuthenticated && wallet && (
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-yellow-400 font-bold">🪙 {wallet.coins.toLocaleString()}</span>
-              <span className="text-cyan-400 font-bold">💎 {wallet.gems}</span>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <span className="text-base">🪙</span>
+                <span className="text-yellow-400 font-black text-sm tabular-nums">{wallet.coins.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <span className="text-base">💎</span>
+                <span className="text-cyan-400 font-black text-sm tabular-nums">{wallet.gems}</span>
+              </div>
             </div>
           )}
+
           {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              <Link to="/profile" className="text-sm text-gray-300 hover:text-white font-medium">
-                👤 {user?.username}
+            <div className="flex items-center gap-2">
+              <Link to="/profile"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-black"
+                  style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)' }}>
+                  {user?.username?.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm text-gray-300 hidden sm:block">{user?.username}</span>
               </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-sm px-3 py-1 rounded bg-red-700 hover:bg-red-600 text-white font-medium transition-colors"
-              >
-                Logout
+              <button type="button" onClick={handleLogout}
+                title="Logout"
+              className="px-3 py-1.5 rounded-lg text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors border border-red-500/20">
+                Exit
               </button>
             </div>
           ) : (
-            <div className="flex gap-2">
-              <Link to="/login" className="text-sm px-3 py-1 rounded border border-gray-600 hover:border-yellow-400 text-gray-300 hover:text-yellow-400 transition-colors">
+            <div className="flex items-center gap-2">
+              <Link to="/login"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-300 hover:text-white border border-white/10 hover:border-white/20 transition-colors">
                 Login
               </Link>
-              <Link to="/signup" className="text-sm px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-bold transition-colors">
+              <Link to="/signup"
+                className="px-4 py-1.5 rounded-lg text-sm font-black text-black transition-all hover:scale-105 active:scale-95"
+                style={{ background: 'linear-gradient(135deg,#f59e0b,#ef4444)', boxShadow: '0 0 20px rgba(245,158,11,0.4)' }}>
                 Sign Up
               </Link>
             </div>
           )}
-        </div>
 
-        {/* Mobile hamburger */}
-        <button type="button" className="md:hidden text-gray-300" onClick={() => setMenuOpen(!menuOpen)}>
-          <span className="text-2xl">{menuOpen ? '✕' : '☰'}</span>
-        </button>
+          {/* Mobile hamburger */}
+          <button type="button" className="md:hidden p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5"
+            onClick={() => setMenuOpen(!menuOpen)}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {menuOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-gray-800 border-t border-gray-700 px-4 py-4 flex flex-col gap-4">
-          {navLink('/', 'Home')}
-          {isAuthenticated && (
-            <>
-              {navLink('/dashboard', 'Dashboard')}
-              {navLink('/collection', 'Collection')}
-              {navLink('/store', 'Store')}
-              {navLink('/marketplace', 'Marketplace')}
-              {navLink('/battle', 'Battle')}
-            </>
-          )}
-          {navLink('/leaderboard', 'Leaderboard')}
+        <div className="md:hidden border-t border-white/5 px-4 py-3 flex flex-col gap-1"
+          style={{ background: 'rgba(5,8,16,0.95)' }}>
+          {(isAuthenticated ? navLinks : [navLinks[5]]).map(({ to, label, icon }) => (
+            <Link key={to} to={to}
+              onClick={() => setMenuOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-colors
+                ${isActive(to) ? 'bg-yellow-500/20 text-yellow-400' : 'text-gray-400'}`}>
+              <span>{icon}</span>{label}
+            </Link>
+          ))}
           {isAuthenticated && wallet && (
-            <div className="flex gap-4 text-sm pt-2 border-t border-gray-700">
-              <span className="text-yellow-400 font-bold">🪙 {wallet.coins.toLocaleString()}</span>
-              <span className="text-cyan-400 font-bold">💎 {wallet.gems}</span>
+            <div className="flex gap-3 px-3 py-2 border-t border-white/5 mt-1">
+              <span className="text-yellow-400 font-black text-sm">🪙 {wallet.coins.toLocaleString()}</span>
+              <span className="text-cyan-400 font-black text-sm">💎 {wallet.gems}</span>
             </div>
           )}
-          {isAuthenticated ? (
-            <button type="button" onClick={handleLogout} className="text-sm text-red-400 text-left">
-              Logout ({user?.username})
+          {isAuthenticated && (
+            <button type="button" onClick={handleLogout}
+              className="text-left px-3 py-2 text-sm text-red-400 font-semibold">
+              Logout
             </button>
-          ) : (
-            <div className="flex gap-2">
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="text-sm text-gray-300">Login</Link>
-              <Link to="/signup" onClick={() => setMenuOpen(false)} className="text-sm text-yellow-400 font-bold">Sign Up</Link>
-            </div>
           )}
         </div>
       )}

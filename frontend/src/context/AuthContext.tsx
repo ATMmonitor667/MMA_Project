@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { User, Wallet } from '../types';
+import type { User, Wallet } from '../types';
 import * as authApi from '../api/auth';
 import { getWallet } from '../api/cards';
 

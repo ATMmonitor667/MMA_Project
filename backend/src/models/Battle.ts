@@ -46,31 +46,115 @@ export async function createBattleTable(): Promise<void> {
 
 const STAT_KEYS = ['power_stat', 'speed_stat', 'durability_stat', 'iq_stat'];
 
+function applyPassive(
+  stats: Record<string, number>,
+  passive: string | null,
+  round: number,
+  roundsWonSoFar: number,
+  opponentStats?: Record<string, number>
+): Record<string, number> {
+  if (!passive) return stats;
+  const s = { ...stats };
+
+  if (passive.startsWith('Iron Chin'))          { s.durability_stat = Math.min(99, Math.round(s.durability_stat * 1.10)); }
+  else if (passive.startsWith('Cardio Machine') && round === 3) { for (const k of STAT_KEYS) s[k] = Math.min(99, Math.round(s[k] * 1.05)); }
+  else if (passive.startsWith('Southpaw Stance'))              { s.speed_stat = Math.min(99, Math.round(s.speed_stat * 1.10)); }
+  else if (passive.startsWith('Veteran IQ'))                   { s.iq_stat = Math.min(99, Math.round(s.iq_stat * 1.15)); }
+  else if (passive.startsWith('Submission Specialist'))        { s.iq_stat = Math.min(99, Math.round(s.iq_stat * 1.25)); }
+  else if (passive.startsWith('Explosive Starter') && round === 1) { for (const k of STAT_KEYS) s[k] = Math.min(99, Math.round(s[k] * 1.20)); }
+  else if (passive.startsWith('Pressure Fighter') && roundsWonSoFar > 0) {
+    const boost = 1 + (roundsWonSoFar * 0.05);
+    for (const k of STAT_KEYS) s[k] = Math.min(99, Math.round(s[k] * boost));
+  }
+  else if (passive.startsWith('Glass Jaw') && opponentStats) {
+    opponentStats.power_stat = Math.max(1, Math.round(opponentStats.power_stat * 0.90));
+    s.power_stat = Math.min(99, Math.round(s.power_stat * 1.20));
+  }
+  // 'Wrestling Base' and 'Counter Striker' are handled during round resolution
+  return s;
+}
+
+export interface BattleRoundExtended extends BattleRound {
+  passive_triggered?: string | null;
+}
+
 export function resolveBattle(
   challengerCard: any,
   opponentCard: any
-): { rounds: BattleRound[]; winner: 'challenger' | 'opponent' | 'draw' } {
-  const rounds: BattleRound[] = [];
+): { rounds: BattleRoundExtended[]; winner: 'challenger' | 'opponent' | 'draw' } {
+  const rounds: BattleRoundExtended[] = [];
   let challengerWins = 0;
   let opponentWins = 0;
 
   for (let i = 1; i <= 3; i++) {
     const stat = STAT_KEYS[Math.floor(Math.random() * STAT_KEYS.length)];
-    const cVal = Math.round(challengerCard[stat] * (0.9 + Math.random() * 0.2));
-    const oVal = Math.round(opponentCard[stat] * (0.9 + Math.random() * 0.2));
+
+    // Deep-copy base stats for this round
+    let cStats: Record<string, number> = {
+      power_stat: challengerCard.power_stat,
+      speed_stat: challengerCard.speed_stat,
+      durability_stat: challengerCard.durability_stat,
+      iq_stat: challengerCard.iq_stat,
+    };
+    let oStats: Record<string, number> = {
+      power_stat: opponentCard.power_stat,
+      speed_stat: opponentCard.speed_stat,
+      durability_stat: opponentCard.durability_stat,
+      iq_stat: opponentCard.iq_stat,
+    };
+
+    // Apply passive abilities
+    cStats = applyPassive(cStats, challengerCard.passive_ability ?? null, i, challengerWins, oStats);
+    oStats = applyPassive(oStats, opponentCard.passive_ability ?? null, i, opponentWins, cStats);
+
+    // Counter Striker: +15% power when currently losing overall
+    if (challengerCard.passive_ability?.startsWith('Counter Striker') && challengerWins < opponentWins) {
+      cStats.power_stat = Math.min(99, Math.round(cStats.power_stat * 1.15));
+    }
+    if (opponentCard.passive_ability?.startsWith('Counter Striker') && opponentWins < challengerWins) {
+      oStats.power_stat = Math.min(99, Math.round(oStats.power_stat * 1.15));
+    }
+
+    // Wrestling Base: +20% durability when durability is the stat used
+    if (stat === 'durability_stat') {
+      if (challengerCard.passive_ability?.startsWith('Wrestling Base')) {
+        cStats.durability_stat = Math.min(99, Math.round(cStats.durability_stat * 1.20));
+      }
+      if (opponentCard.passive_ability?.startsWith('Wrestling Base')) {
+        oStats.durability_stat = Math.min(99, Math.round(oStats.durability_stat * 1.20));
+      }
+    }
+
+    // Add variance ±10%
+    const cVal = Math.round(cStats[stat] * (0.9 + Math.random() * 0.2));
+    const oVal = Math.round(oStats[stat] * (0.9 + Math.random() * 0.2));
 
     let roundWinner: 'challenger' | 'opponent' | 'draw';
-    if (cVal > oVal) { roundWinner = 'challenger'; challengerWins++; }
-    else if (oVal > cVal) { roundWinner = 'opponent'; opponentWins++; }
-    else { roundWinner = 'draw'; }
+    if (cVal > oVal)      { roundWinner = 'challenger'; challengerWins++; }
+    else if (oVal > cVal) { roundWinner = 'opponent';   opponentWins++; }
+    else                  { roundWinner = 'draw'; }
 
-    rounds.push({ round: i, stat_used: stat.replace('_stat', ''), challenger_value: cVal, opponent_value: oVal, winner: roundWinner });
+    // Note if a passive was active this round
+    const passiveFired = challengerCard.passive_ability
+      ? `${challengerCard.first_name ?? 'Challenger'}'s ${challengerCard.passive_ability.split(':')[0]}`
+      : (opponentCard.passive_ability
+          ? `${opponentCard.first_name ?? 'Opponent'}'s ${opponentCard.passive_ability.split(':')[0]}`
+          : null);
+
+    rounds.push({
+      round: i,
+      stat_used: stat.replace('_stat', ''),
+      challenger_value: cVal,
+      opponent_value: oVal,
+      winner: roundWinner,
+      passive_triggered: passiveFired,
+    });
   }
 
   let winner: 'challenger' | 'opponent' | 'draw';
-  if (challengerWins > opponentWins) winner = 'challenger';
+  if (challengerWins > opponentWins)      winner = 'challenger';
   else if (opponentWins > challengerWins) winner = 'opponent';
-  else winner = 'draw';
+  else                                    winner = 'draw';
 
   return { rounds, winner };
 }

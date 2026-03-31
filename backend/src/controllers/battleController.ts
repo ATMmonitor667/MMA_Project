@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { resolveBattle, saveBattle, getBattleHistory, getLeaderboard } from '../models/Battle';
 import { getCardById, addXpToCard, getUserCollection, generateCard } from '../models/Card';
 import { addCoins, getOrCreateWallet } from '../models/Wallet';
+import { getUserStats, checkAndUnlock } from '../models/Achievement';
 
 export const challenge = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -73,6 +74,13 @@ export const challenge = async (req: Request, res: Response): Promise<void> => {
       await addCoins(userId, coinsWon);
     }
 
+    // Check and unlock any newly earned achievements
+    const stats = await getUserStats(userId);
+    const newAchievements = await checkAndUnlock(userId, {
+      ...stats as any,
+      latestBattleRounds: rounds,
+    });
+
     res.json({
       success: true,
       data: {
@@ -83,6 +91,7 @@ export const challenge = async (req: Request, res: Response): Promise<void> => {
         coins_won: coinsWon,
         challenger_card: challengerCard,
         opponent_card: opponentCard,
+        new_achievements: newAchievements,
       },
     });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CollectionItem, RARITY_COLORS, RARITY_LABELS } from '../../types';
+import type { CollectionItem } from '../../types';
+import { RARITY_COLORS, RARITY_LABELS } from '../../types';
 import { createListing } from '../../api/trade';
 
 interface TradeModalProps {

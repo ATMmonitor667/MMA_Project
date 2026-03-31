@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { FighterCard as FighterCardType, RARITY_COLORS, RARITY_LABELS } from '../../types';
+import { useState } from 'react';
+import type { FighterCard as FighterCardType } from '../../types';
+import { RARITY_COLORS, RARITY_LABELS } from '../../types';
 
 interface PackOpeningProps {
   cards: FighterCardType[];

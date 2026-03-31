@@ -3,6 +3,7 @@ import {
   getPackById, rollRarity, generateCard, addToCollection, getUserCollection, getAllPacks, getRandomFighterId,
 } from '../models/Card';
 import { getOrCreateWallet, deductCoins, deductGems } from '../models/Wallet';
+import { getUserStats, checkAndUnlock } from '../models/Achievement';
 
 export const openPack = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -40,7 +41,10 @@ export const openPack = async (req: Request, res: Response): Promise<void> => {
       newCards.push(card);
     }
 
-    res.json({ success: true, message: `Opened ${pack.name}!`, data: { cards: newCards, pack } });
+    const stats = await getUserStats(userId);
+    const newAchievements = await checkAndUnlock(userId, stats as any);
+
+    res.json({ success: true, message: `Opened ${pack.name}!`, data: { cards: newCards, pack, new_achievements: newAchievements } });
   } catch (error: any) {
     console.error('openPack error:', error);
     res.status(500).json({ success: false, message: error.message || 'Internal server error' });
